@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-function QuestionForm({ onAddQuestion }) {
+function QuestionForm(props) {
   const [formData, setFormData] = useState({
     prompt: "",
     answer1: "",
@@ -11,38 +11,53 @@ function QuestionForm({ onAddQuestion }) {
   });
 
   function handleChange(event) {
-    const { name, value } = event.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    // updating the right input in the state
+    setFormData({
+      ...formData,
+      [event.target.name]: event.target.value,
+    });
   }
 
   function handleSubmit(event) {
-    const newQuestion = {
-      prompt: formData.prompt,
-      answers: [
-        formData.answer1,
-        formData.answer2,
-        formData.answer3,
-        formData.answer4,
-      ],
-      correctIndex: parseInt(formData.correctIndex),
-    };
+    event.preventDefault();
+
+    // placed answers into one array
+    const answers = [
+      formData.answer1,
+      formData.answer2,
+      formData.answer3,
+      formData.answer4,
+    ];
+
+    // Ensure the correctIndex is a number, not a string --->parsing it as int
+    const correctIndex = parseInt(formData.correctIndex, 10);
 
     fetch("http://localhost:4000/questions", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newQuestion),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt: formData.prompt,
+        answers: answers,
+        correctIndex: correctIndex,
+      }),
     })
-      .then((r) => r.json())
-      .then(onAddQuestion);
-
-    setFormData({
-      prompt: "",
-      answer1: "",
-      answer2: "",
-      answer3: "",
-      answer4: "",
-      correctIndex: 0,
-    });
+      .then((response) => response.json())
+      .then((data) => {
+        setFormData({
+          prompt: "",
+          answer1: "",
+          answer2: "",
+          answer3: "",
+          answer4: "",
+          correctIndex: 0,
+        });
+        console.log("Response:", data);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
   }
 
   return (
